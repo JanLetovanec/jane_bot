@@ -125,7 +125,7 @@ async def greet(context):
     brief='Jane will look up a definition of a word',
     pass_context=False
 )
-async def grammar(word, opts="def"):
+async def lookup(word, opts="def"):
     """ Lookup in dictionary"""
     await BOT.say("Hold on for a second...")
     strings = grammar.serve(word, opts)

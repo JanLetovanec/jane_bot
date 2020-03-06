@@ -20,9 +20,12 @@ class Entry:
         self.phrasalVerbs = []
 
     def parse_window(self, site):
+        if self.get_bad_result(site) is not None:
+            return self.get_bad_result(site)
         self.parse_definition_section(site)
         self.parse_phrases_section(site)
         self.parse_p_verbs(site)
+        return None
 
     def parse_definition_section(self, site):
         pos_parts = site.html.find("section.gramb", first=False)
@@ -68,6 +71,17 @@ class Entry:
             pv = PhrasalVerbs()
             pv.parse_pv(pv_titles[index], pv_bodies[index])
             self.phrasalVerbs.append(pv)
+
+    def get_bad_result(self, site):
+        result = []
+        similar_list = site.html.find(".search-results", first=True)
+        if similar_list is None:
+            return None
+        else:
+            similar_list = similar_list.find("li > a", first=False)
+            for element in similar_list:
+                result.append(element.text)
+        return result
 
 
 class SubEntry:
@@ -206,17 +220,19 @@ def cache_add(word, entry):
 def get_entry(word):
     """ Gets all definitions for a given word """
     global cache
-    if word in cache:
-        return cache[word]
+    if word in cache.keys():
+        return cache[word], None
 
     site = get_window(word)
     if site is None:
         print("HTTP error")
         return
     e = Entry()
-    e.parse_window(site)
+    error = e.parse_window(site)
+    if error is not None:
+        return e, error
     cache_add(word, e)
-    return e
+    return e, None
 
 
 def get_window(word):
@@ -226,8 +242,14 @@ def get_window(word):
     return site
 
 
-def bad_spelling(word):
-    pass
+def bad_spelling(word, error):
+    string = "I am sorry, but it seems I do not recognise: " + word + ".\n"
+    string += "Did you mean one of these:\n"
+    string += "```"
+    for w in error:
+        string += w + "\n"
+    string += "```"
+    return string
 
 
 """ Printers and getters """
@@ -294,7 +316,10 @@ def print_phrases(entry):
 
 
 def serve(word, option="def"):
-    e = get_entry(word)
+    print("Polling:", word, option)
+    e, err = get_entry(word)
+    if err is not None:
+        return [bad_spelling(word, err)]
     print("Lookup: cached - ", word, option)
 
     if option == "def":
