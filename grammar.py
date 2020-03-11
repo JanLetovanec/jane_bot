@@ -43,7 +43,7 @@ class Entry:
         if phrases_section is None:
             print("Missing phrases")
             return
-        titles = phrases_section.find("ul > li > div > p > span.ind > .phrase")
+        titles = phrases_section.find("ul >  strong.phrase")
         bodies = phrases_section.find("ul > ul.semb")
 
         for index in range(0, len(titles)):
@@ -108,7 +108,7 @@ class SubEntry:
 
         synonyms = element.find(".synonyms > div.exg", first=True)
         if synonyms is not None:
-            synonyms = synonyms.find(".exs")
+            synonyms = synonyms.find(".syn")
             for synonym_group in synonyms:
                 self.synonyms += synonym_group.text.split(",")
 
@@ -130,7 +130,7 @@ class Phrase:
         self.synonyms = []
 
     def parse_phrase(self, title, body):
-        definition_part = body.find("div.trg > p", first=True)
+        definition_part = body.find("div.trg > p > span.ind", first=True)
         examples_part = body.find(".ex")
         if (title is None) or (body is None):
             return None
@@ -302,6 +302,7 @@ def print_phrases(entry):
     for phrase in entry.phrases:
         string = "```"
         string += "{}\n".format(phrase.title)
+        string += "{}\n".format(phrase.definition)
         if len(phrase.examples) >= 1:
             string += "Example: {}\n".format(phrase.examples[0])
         else:
